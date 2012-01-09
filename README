@@ -1,0 +1,27 @@
+So,
+
+  Mail clients. I have yet to discover why it is, but people seem unable
+to make good ones. I've been reasonably happy with mine, but it's time
+to fight back against the netiquette haters with better software. Since
+there is no better software, I've started working on my own every now
+and then. Eventually that will mean migration, and having seen that one
+coming, I've reverse engineered the file format my client uses every so
+and so often. There are some tools and there is some documentation out
+there, but they are outdated and some come in forms like Delphi code. In
+my case, also wanted to extract information others can probably do with-
+out, and of course I wanted to obtain it reasonably properly so I don't
+run into any surprises, so this wasn't entirely trivial. The basic form
+is quite simple, but the part following the message list is weird, I've,
+well, normalized variable length fields and guessed based on what you'd
+find the length of the not-yet-normalized variable lengths fields until
+everything parsed okay. It's likely not complete, but works for me.
+
+I used the Data::ParseBinary module which in turn is based on the Python
+PyConstructs module. The documentation for the Perl module isn't great,
+but the module as a whole was okay to work with, certainly better than
+having `read`s all over and then trying to `unpack` each little bit into
+variables. The main gotcha I encountered was that you can only have one
+`then` argument to the If function, but you get not proper error message
+for that. Unrelated to the module, if vec() warned when you use it on a
+hash reference rather than a string, that would have helped aswell... I
+made no effort to name things sensibly, this is just how it has grown.

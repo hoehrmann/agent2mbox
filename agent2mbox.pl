@@ -17,7 +17,7 @@ my $contents = do { local $/; <$idx_file> };
 
 my $dat_path = do {
   my $path = $ARGV[0];
-  $path =~ s/\.idx$/.dat/i;
+  $path =~ s/\.idx$/.DAT/i;
   $path;
 };
 
@@ -220,14 +220,20 @@ foreach my $ix (0 .. -1 + @{ $r->{'Index Entries'} }) {
     }
   }
 
+  my $uri = URI->new;
+
   my $text = $article;
   if ($text =~ /^\x00\x19/) {
-    substr $text, 0, 0x20, '';
-    (undef, my $len) = unpack "a8V", $text;
-    $text = substr $text, 0, $len - 0x20;
+    die unless $text =~ /^(.{36})(.*?)\n\w+:/s;
+    my @v = unpack 'V9', $1;
+    my $len = $v[2];
+    my $rest = substr $text, 0x24 + ($len - 0x24);
+    $text = substr $text, 0x24, $len - 0x24;
+
+    $uri->query_param(sprintf("v%u", $_), sprintf("%08x", $v[$_])) for 0 .. $#v;
+    $uri->query_param("past_length", $rest);
   }
 
-  my $uri = URI->new;
   while (my ($name, $value) = each %{ $r->{'Message Flags'} }) {
     $uri->query_param(lc $name, 1) if vec $value->{Data}, $ix, 1;
   }
@@ -235,7 +241,11 @@ foreach my $ix (0 .. -1 + @{ $r->{'Index Entries'} }) {
   $uri->query_param(folder_name => $folder_name);
 
   my $text2 = $text;
-  $text2 =~ s/^.*?\n//;
+
+  # ($subject, $from, $msgid, $unk1, $nntp) separated by 0x09, followed by CR
+  $text2 =~ s/^(.*?)\r?\n//;
+  $uri->query_param("agent" => $1);
+
   $text2 =~ s/^(>*)From /$1>From /mg;
 
   my $guid1 = "E18D6C16-8251-12F7-B8DC-02717793E0F3";
